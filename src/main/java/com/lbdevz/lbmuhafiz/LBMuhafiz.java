@@ -3,6 +3,7 @@ package com.lbdevz.lbmuhafiz;
 import com.lbdevz.lbmuhafiz.commands.MuhafizCommand;
 import com.lbdevz.lbmuhafiz.commands.MuhafizTabCompleter;
 import com.lbdevz.lbmuhafiz.listeners.MuhafizDeathListener;
+import com.lbdevz.lbmuhafiz.listeners.MuhafizListener;
 import com.lbdevz.lbmuhafiz.managers.MuhafizManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,6 +24,7 @@ public final class LBMuhafiz extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new MuhafizDeathListener(this), this);
+        getServer().getPluginManager().registerEvents(new MuhafizListener(this), this);
 
         getLogger().info("LBMuhafiz başarıyla yüklendi!");
     }
