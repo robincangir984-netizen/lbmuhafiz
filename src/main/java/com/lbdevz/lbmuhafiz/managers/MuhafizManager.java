@@ -153,8 +153,10 @@ public class MuhafizManager {
                     Location spawnLoc = model.getSpawnLocation();
                     Location currentLoc = living.getLocation();
 
+                    // 1. Durum: Muhafız spawn noktasından 8 bloktan fazla uzaklaşmışsa (8^2 = 64)
                     boolean farFromSpawn = !currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 64.0;
 
+                    // 2. Durum: Muhafızın hedef aldığı oyuncu spawn noktasından 8 bloktan uzaktaysa
                     boolean targetFarFromSpawn = false;
                     if (living instanceof Mob mob && mob.getTarget() != null) {
                         Location targetLoc = mob.getTarget().getLocation();
@@ -164,26 +166,21 @@ public class MuhafizManager {
                     }
 
                     if (farFromSpawn || targetFarFromSpawn) {
-                        if (living instanceof Mob mob) {
-                            mob.setTarget(null);
-                            mob.getPathfinder().stopPathfinding();
-
-                            // Mob yapay zekasının 1 saniye boyunca tekrar kilitlenmesini engelle
-                            AttributeInstance followRange = mob.getAttribute(Attribute.GENERIC_FOLLOW_RANGE);
-                            if (followRange != null) {
-                                double originalRange = followRange.getBaseValue();
-                                followRange.setBaseValue(0.0);
-                                Bukkit.getScheduler().runTaskLater(plugin, () -> followRange.setBaseValue(originalRange), 20L);
-                            }
-                        }
-
                         if (!spawnLoc.getChunk().isLoaded()) {
                             spawnLoc.getChunk().load();
                         }
 
+                        // Doğrudan belirlenen konuma ışınla ve ivmesini sıfırla
                         living.teleport(spawnLoc);
                         living.setVelocity(new Vector(0, 0, 0));
 
+                        // Işınlandıktan sonra hedefi, patikayı ve yapay zeka odağını KESİNLİKLE temizle
+                        if (living instanceof Mob mob) {
+                            mob.setTarget(null);
+                            mob.getPathfinder().stopPathfinding();
+                        }
+
+                        // Canını yenile ve ismini güncelle
                         AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
                         if (maxHealthAttr != null) {
                             maxHealthAttr.setBaseValue(model.getMaxHealth());
@@ -194,7 +191,7 @@ public class MuhafizManager {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 5L, 5L);
+        }.runTaskTimer(plugin, 5L, 5L); // Kontrol süresi 5 tick (0.25 sn)
     }
 
     public void updateHealthName(LivingEntity entity, String baseName, double currentHealth, double maxHealth) {
