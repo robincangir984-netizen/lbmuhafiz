@@ -136,11 +136,7 @@ public class MuhafizManager {
 
                     Entity entity = Bukkit.getEntity(entityUUID);
 
-                    if (entity == null || !entity.isValid()) {
-                        continue;
-                    }
-
-                    if (!(entity instanceof LivingEntity living) || living.isDead()) {
+                    if (entity == null || !entity.isValid() || !(entity instanceof LivingEntity living) || living.isDead()) {
                         continue;
                     }
 
@@ -149,33 +145,25 @@ public class MuhafizManager {
                         continue;
                     }
 
-                    Location spawnLoc = model.getSpawnLocation();
+                    // Her muhafızın kaydettiğin kendi setloc konumu
+                    Location setLoc = model.getSpawnLocation();
                     Location currentLoc = living.getLocation();
 
-                    // 1. Durum: Muhafız spawn noktasından 8 bloktan fazla uzaklaşmışsa (8^2 = 64)
-                    boolean farFromSpawn = !currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 64.0;
+                    // 1. Durum: Muhafız kendi setloc alanından 8 blok uzağa gittiyse (8^2 = 64)
+                    boolean isMobFar = !currentLoc.getWorld().equals(setLoc.getWorld()) || currentLoc.distanceSquared(setLoc) > 64.0;
 
-                    // 2. Durum: Muhafızın hedef aldığı oyuncu spawn noktasından 8 bloktan uzaktaysa
-                    boolean targetFarFromSpawn = false;
+                    // 2. Durum: Muhafızın hedefindeki oyuncu setloc alanından 8 blok uzağa gittiyse
+                    boolean isTargetFar = false;
                     if (living instanceof Mob mob && mob.getTarget() != null) {
                         Location targetLoc = mob.getTarget().getLocation();
-                        if (!targetLoc.getWorld().equals(spawnLoc.getWorld()) || targetLoc.distanceSquared(spawnLoc) > 64.0) {
-                            targetFarFromSpawn = true;
+                        if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 64.0) {
+                            isTargetFar = true;
                         }
                     }
 
-                    if (farFromSpawn || targetFarFromSpawn) {
-                        // Aktif listeden çıkar ve mevcut mob'u dünyadan sil
-                        activeMuhafizs.remove(entityUUID);
-                        living.remove();
-
-                        // 5 saniye (100 tick) sonra sıfırdan spawn et
-                        new BukkitRunnable() {
-                            @Override
-                            public void run() {
-                                spawnMuhafiz(model);
-                            }
-                        }.runTaskLater(plugin, 100L);
+                    // Herhangi biri setloc'tan 8 blok uzaklaşırsa muhafıza ölümcül hasar vur
+                    if (isMobFar || isTargetFar) {
+                        living.damage(living.getHealth() + 1000.0);
                     }
                 }
             }

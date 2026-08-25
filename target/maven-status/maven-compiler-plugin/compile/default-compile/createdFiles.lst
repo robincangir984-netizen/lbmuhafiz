@@ -1,3 +1,4 @@
+com\lbdevz\lbmuhafiz\commands\MuhafizTabCompleter.class
 com\lbdevz\lbmuhafiz\LBMuhafiz.class
 com\lbdevz\lbmuhafiz\managers\MuhafizManager.class
 com\lbdevz\lbmuhafiz\managers\MuhafizManager$2.class
@@ -5,7 +6,5 @@ com\lbdevz\lbmuhafiz\listeners\MuhafizListener.class
 com\lbdevz\lbmuhafiz\commands\MuhafizCommand.class
 com\lbdevz\lbmuhafiz\models\MuhafizModel.class
 com\lbdevz\lbmuhafiz\listeners\MuhafizDeathListener$1.class
-com\lbdevz\lbmuhafiz\commands\MuhafizTabCompleter.class
-com\lbdevz\lbmuhafiz\managers\MuhafizManager$1$1.class
 com\lbdevz\lbmuhafiz\managers\MuhafizManager$1.class
 com\lbdevz\lbmuhafiz\listeners\MuhafizDeathListener.class
