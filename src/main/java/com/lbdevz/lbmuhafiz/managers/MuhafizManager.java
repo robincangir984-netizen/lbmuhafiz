@@ -17,7 +17,6 @@ import org.bukkit.entity.Mob;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -166,32 +165,21 @@ public class MuhafizManager {
                     }
 
                     if (farFromSpawn || targetFarFromSpawn) {
-                        if (!spawnLoc.getChunk().isLoaded()) {
-                            spawnLoc.getChunk().load();
-                        }
+                        // Aktif listeden çıkar ve mevcut mob'u dünyadan sil
+                        activeMuhafizs.remove(entityUUID);
+                        living.remove();
 
-                        // Doğrudan belirlenen konuma ışınla ve ivmesini sıfırla
-                        living.teleport(spawnLoc);
-                        living.setVelocity(new Vector(0, 0, 0));
-
-                        // Işınlandıktan sonra hedefi, patikayı ve yapay zeka odağını KESİNLİKLE temizle
-                        if (living instanceof Mob mob) {
-                            mob.setTarget(null);
-                            mob.getPathfinder().stopPathfinding();
-                        }
-
-                        // Canını yenile ve ismini güncelle
-                        AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-                        if (maxHealthAttr != null) {
-                            maxHealthAttr.setBaseValue(model.getMaxHealth());
-                        }
-
-                        living.setHealth(model.getMaxHealth());
-                        updateHealthName(living, model.getDisplayName(), model.getMaxHealth(), model.getMaxHealth());
+                        // 5 saniye (100 tick) sonra sıfırdan spawn et
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                spawnMuhafiz(model);
+                            }
+                        }.runTaskLater(plugin, 100L);
                     }
                 }
             }
-        }.runTaskTimer(plugin, 5L, 5L); // Kontrol süresi 5 tick (0.25 sn)
+        }.runTaskTimer(plugin, 5L, 5L);
     }
 
     public void updateHealthName(LivingEntity entity, String baseName, double currentHealth, double maxHealth) {
