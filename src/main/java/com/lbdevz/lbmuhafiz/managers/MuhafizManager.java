@@ -105,8 +105,6 @@ public class MuhafizManager {
 
         Entity entity = world.spawnEntity(spawnLoc, model.getEntityType());
         if (entity instanceof LivingEntity living) {
-            
-            // GENERIC_MAX_HEALTH attribute ile maks canı güvenli şekilde yükseltme
             AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
             if (maxHealthAttr != null) {
                 maxHealthAttr.setBaseValue(model.getMaxHealth());
@@ -154,7 +152,8 @@ public class MuhafizManager {
                     Location spawnLoc = model.getSpawnLocation();
                     Location currentLoc = living.getLocation();
 
-                    if (!currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 225) {
+                    // Farklı dünyadaysa veya spawn noktasından 8 bloktan fazla uzaklaşmışsa (8^2 = 64)
+                    if (!currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 64.0) {
                         if (living instanceof Mob mob) {
                             mob.setTarget(null);
                         }
@@ -163,9 +162,10 @@ public class MuhafizManager {
                             spawnLoc.getChunk().load();
                         }
 
+                        // Doğrudan belirlenen konuma ışınla
                         living.teleport(spawnLoc);
                         
-                        // Teleport ve can yenileme sırasında attribute kontrolü
+                        // Canını yenile ve ismini güncelle
                         AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
                         if (maxHealthAttr != null) {
                             maxHealthAttr.setBaseValue(model.getMaxHealth());
@@ -176,7 +176,7 @@ public class MuhafizManager {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 20L, 20L);
+        }.runTaskTimer(plugin, 10L, 10L); // Kontrol sıklığı 10 tick (~0.5 saniye) yapıldı
     }
 
     public void updateHealthName(LivingEntity entity, String baseName, double currentHealth, double maxHealth) {
