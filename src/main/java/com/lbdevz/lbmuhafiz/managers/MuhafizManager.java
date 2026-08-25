@@ -4,6 +4,7 @@ import com.lbdevz.lbmuhafiz.LBMuhafiz;
 import com.lbdevz.lbmuhafiz.models.MuhafizModel;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -14,6 +15,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -89,9 +91,12 @@ public class MuhafizManager {
         Location spawnLoc = model.getSpawnLocation();
         World world = spawnLoc.getWorld();
 
-        if (!spawnLoc.getChunk().isLoaded()) {
-            spawnLoc.getChunk().load();
+        // Chunk'ı zorla yükle ve kilitle
+        Chunk spawnChunk = spawnLoc.getChunk();
+        if (!spawnChunk.isLoaded()) {
+            spawnChunk.load();
         }
+        world.setChunkForceLoaded(spawnChunk.getX(), spawnChunk.getZ(), true);
 
         removeAllEntitiesOfModel(model.getId());
 
@@ -128,55 +133,75 @@ public class MuhafizManager {
                     Location setLoc = model.getSpawnLocation();
                     if (setLoc == null || setLoc.getWorld() == null) continue;
 
+                    World world = setLoc.getWorld();
+
+                    // Chunk yüklü tutuluyor mu kontrol et
                     if (!setLoc.getChunk().isLoaded()) {
                         setLoc.getChunk().load();
                     }
 
-                    boolean found = false;
-                    for (Entity entity : setLoc.getWorld().getEntities()) {
-                        if (!(entity instanceof LivingEntity living)) continue;
+                    boolean entityFound = false;
 
-                        String entityModelId = living.getPersistentDataContainer().get(muhafizKey, PersistentDataType.STRING);
-                        if (entityModelId == null || !entityModelId.equals(modelId)) continue;
+                    for (UUID uuid : new HashSet<>(activeMuhafizs.keySet())) {
+                        if (!modelId.equals(activeMuhafizs.get(uuid))) continue;
 
-                        found = true;
-                        Location mobLoc = living.getLocation();
+                        Entity entity = Bukkit.getEntity(uuid);
 
-                        boolean isMobFar = !mobLoc.getWorld().equals(setLoc.getWorld()) || mobLoc.distanceSquared(setLoc) > 64.0;
-
-                        boolean isTargetFar = false;
-                        if (living instanceof Mob mob && mob.getTarget() != null) {
-                            Location targetLoc = mob.getTarget().getLocation();
-                            if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 64.0) {
-                                isTargetFar = true;
-                                mob.setTarget(null);
-                            }
+                        // Mob dünyadan silindiyse veya erişilemiyorsa resetle
+                        if (entity == null || !entity.isValid() || entity.isDead()) {
+                            continue;
                         }
 
-                        if (isMobFar || isTargetFar) {
-                            respawningModels.add(modelId);
-                            activeMuhafizs.remove(living.getUniqueId());
+                        entityFound = true;
 
-                            living.remove();
+                        if (entity instanceof LivingEntity living) {
+                            Location mobLoc = living.getLocation();
 
-                            new BukkitRunnable() {
-                                @Override
-                                public void run() {
-                                    spawnMuhafiz(model);
+                            // 1. Mob setLoc'tan 8 blok uzaklaştı mı? (8^2 = 64)
+                            boolean mobFar = !mobLoc.getWorld().equals(setLoc.getWorld()) || mobLoc.distanceSquared(setLoc) > 64.0;
+
+                            // 2. Mob'un saldırdığı hedef setLoc'tan 8 blok uzaklaştı mı?
+                            boolean targetFar = false;
+                            if (living instanceof Mob mob && mob.getTarget() != null) {
+                                Location targetLoc = mob.getTarget().getLocation();
+                                if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 64.0) {
+                                    targetFar = true;
+                                    mob.setTarget(null);
                                 }
-                            }.runTaskLater(plugin, 100L); // 5 saniye sonra doğur
-                            break;
+                            }
+
+                            // 8 blok sınırı ihlal edildiyse derhal imha et ve respawn sürecine al
+                            if (mobFar || targetFar) {
+                                resetAndRespawn(model, uuid, living);
+                                break;
+                            }
                         }
                     }
 
-                    // Eğer dünyada mob bulunamadıysa (örneğin kaybolduysa) resetle
-                    if (!found && !respawningModels.contains(modelId)) {
+                    // Eğer mob aktif gözüküp oyunda yoksa (bug'a girdiyse) otomatik doğur
+                    if (!entityFound && !respawningModels.contains(modelId)) {
                         respawningModels.add(modelId);
                         spawnMuhafiz(model);
                     }
                 }
             }
-        }.runTaskTimer(plugin, 2L, 2L); // 2 tick (0.1 sn) kontrol sıklığı
+        }.runTaskTimer(plugin, 2L, 2L);
+    }
+
+    private void resetAndRespawn(MuhafizModel model, UUID uuid, Entity entity) {
+        respawningModels.add(model.getId());
+        activeMuhafizs.remove(uuid);
+
+        if (entity != null && entity.isValid()) {
+            entity.remove();
+        }
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                spawnMuhafiz(model);
+            }
+        }.runTaskLater(plugin, 100L); // 5 saniye (100 tick)
     }
 
     private void removeAllEntitiesOfModel(String modelId) {
@@ -260,6 +285,13 @@ public class MuhafizManager {
             for (Entity entity : world.getEntities()) {
                 if (entity.getPersistentDataContainer().has(muhafizKey, PersistentDataType.STRING)) {
                     entity.remove();
+                }
+            }
+            // Force load kilidini kaldır
+            for (MuhafizModel model : muhafizModels.values()) {
+                if (model.getSpawnLocation() != null) {
+                    Chunk chunk = model.getSpawnLocation().getChunk();
+                    world.setChunkForceLoaded(chunk.getX(), chunk.getZ(), false);
                 }
             }
         }
