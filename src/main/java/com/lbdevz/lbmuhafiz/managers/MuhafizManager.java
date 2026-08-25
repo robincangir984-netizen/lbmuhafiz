@@ -14,7 +14,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
-import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -26,7 +25,7 @@ public class MuhafizManager {
     private final LBMuhafiz plugin;
     private final Map<String, MuhafizModel> muhafizModels = new HashMap<>();
     private final Map<UUID, String> activeMuhafizs = new HashMap<>();
-    private final Set<String> dyingMuhafizs = new HashSet<>();
+    private final Set<String> respawningModels = new HashSet<>();
     private final NamespacedKey muhafizKey;
     private BukkitTask distanceCheckTask;
 
@@ -94,8 +93,7 @@ public class MuhafizManager {
             spawnLoc.getChunk().load();
         }
 
-        // Eski muhafız varsa haritadan zorla temizle
-        killExistingEntitiesOfModel(model.getId());
+        removeAllEntitiesOfModel(model.getId());
 
         Entity entity = world.spawnEntity(spawnLoc, model.getEntityType());
         if (entity instanceof LivingEntity living) {
@@ -110,7 +108,7 @@ public class MuhafizManager {
             living.getPersistentDataContainer().set(muhafizKey, PersistentDataType.STRING, model.getId());
 
             activeMuhafizs.put(living.getUniqueId(), model.getId());
-            dyingMuhafizs.remove(model.getId());
+            respawningModels.remove(model.getId());
             updateHealthName(living, model.getDisplayName(), living.getHealth(), model.getMaxHealth());
         }
     }
@@ -125,60 +123,63 @@ public class MuhafizManager {
             public void run() {
                 for (MuhafizModel model : muhafizModels.values()) {
                     String modelId = model.getId();
-                    if (dyingMuhafizs.contains(modelId)) continue;
+                    if (respawningModels.contains(modelId)) continue;
 
                     Location setLoc = model.getSpawnLocation();
                     if (setLoc == null || setLoc.getWorld() == null) continue;
 
-                    // Chunk yüklü değilse yükle ki mob silinebilsin
                     if (!setLoc.getChunk().isLoaded()) {
                         setLoc.getChunk().load();
                     }
 
-                    // Dünya üzerindeki bu modele ait muhafızları tara
+                    boolean found = false;
                     for (Entity entity : setLoc.getWorld().getEntities()) {
                         if (!(entity instanceof LivingEntity living)) continue;
 
                         String entityModelId = living.getPersistentDataContainer().get(muhafizKey, PersistentDataType.STRING);
                         if (entityModelId == null || !entityModelId.equals(modelId)) continue;
 
+                        found = true;
                         Location mobLoc = living.getLocation();
 
-                        // 1. Muhafız setloc'tan 8 blok uzaklaştı mı? (8^2 = 64)
                         boolean isMobFar = !mobLoc.getWorld().equals(setLoc.getWorld()) || mobLoc.distanceSquared(setLoc) > 64.0;
 
-                        // 2. Muhafızın hedefi setloc'tan 8 blok uzaklaştı mı?
                         boolean isTargetFar = false;
                         if (living instanceof Mob mob && mob.getTarget() != null) {
                             Location targetLoc = mob.getTarget().getLocation();
                             if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 64.0) {
                                 isTargetFar = true;
+                                mob.setTarget(null);
                             }
                         }
 
                         if (isMobFar || isTargetFar) {
-                            dyingMuhafizs.add(modelId);
+                            respawningModels.add(modelId);
                             activeMuhafizs.remove(living.getUniqueId());
 
-                            // Mob'u kaldır
                             living.remove();
 
-                            // 5 saniye (100 tick) sonra doğur
                             new BukkitRunnable() {
                                 @Override
                                 public void run() {
                                     spawnMuhafiz(model);
                                 }
-                            }.runTaskLater(plugin, 100L);
+                            }.runTaskLater(plugin, 100L); // 5 saniye sonra doğur
                             break;
                         }
                     }
+
+                    // Eğer dünyada mob bulunamadıysa (örneğin kaybolduysa) resetle
+                    if (!found && !respawningModels.contains(modelId)) {
+                        respawningModels.add(modelId);
+                        spawnMuhafiz(model);
+                    }
                 }
             }
-        }.runTaskTimer(plugin, 5L, 5L);
+        }.runTaskTimer(plugin, 2L, 2L); // 2 tick (0.1 sn) kontrol sıklığı
     }
 
-    private void killExistingEntitiesOfModel(String modelId) {
+    private void removeAllEntitiesOfModel(String modelId) {
         for (World world : Bukkit.getWorlds()) {
             for (Entity entity : world.getEntities()) {
                 String id = entity.getPersistentDataContainer().get(muhafizKey, PersistentDataType.STRING);
@@ -219,11 +220,12 @@ public class MuhafizManager {
 
     public void handleDeath(UUID entityUUID) {
         String muhafizId = activeMuhafizs.remove(entityUUID);
-        if (muhafizId == null || dyingMuhafizs.contains(muhafizId)) return;
+        if (muhafizId == null || respawningModels.contains(muhafizId)) return;
 
         MuhafizModel model = muhafizModels.get(muhafizId);
         if (model == null) return;
 
+        respawningModels.add(muhafizId);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -263,6 +265,6 @@ public class MuhafizManager {
         }
 
         activeMuhafizs.clear();
-        dyingMuhafizs.clear();
+        respawningModels.clear();
     }
 }
