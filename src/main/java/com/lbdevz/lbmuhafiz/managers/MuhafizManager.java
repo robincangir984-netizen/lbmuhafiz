@@ -17,6 +17,7 @@ import org.bukkit.entity.Mob;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -152,18 +153,32 @@ public class MuhafizManager {
                     Location spawnLoc = model.getSpawnLocation();
                     Location currentLoc = living.getLocation();
 
-                    // Farklı dünyadaysa veya spawn noktasından 8 bloktan fazla uzaklaşmışsa (8^2 = 64)
-                    if (!currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 64.0) {
+                    // 1. Durum: Muhafız spawn noktasından 8 bloktan fazla uzaklaşmışsa (8^2 = 64)
+                    boolean farFromSpawn = !currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 64.0;
+
+                    // 2. Durum: Muhafızın hedef aldığı oyuncu spawn noktasından 8 bloktan uzaktaysa
+                    boolean targetFarFromSpawn = false;
+                    if (living instanceof Mob mob && mob.getTarget() != null) {
+                        Location targetLoc = mob.getTarget().getLocation();
+                        if (!targetLoc.getWorld().equals(spawnLoc.getWorld()) || targetLoc.distanceSquared(spawnLoc) > 64.0) {
+                            targetFarFromSpawn = true;
+                        }
+                    }
+
+                    if (farFromSpawn || targetFarFromSpawn) {
                         if (living instanceof Mob mob) {
+                            // Mob yapay zekasını ve yürüme rotasını tamamen temizle
                             mob.setTarget(null);
+                            mob.getPathfinder().stopPathfinding();
                         }
                         
                         if (!spawnLoc.getChunk().isLoaded()) {
                             spawnLoc.getChunk().load();
                         }
 
-                        // Doğrudan belirlenen konuma ışınla
+                        // Doğrudan belirlenen konuma ışınla ve ivmesini sıfırla
                         living.teleport(spawnLoc);
+                        living.setVelocity(new Vector(0, 0, 0));
                         
                         // Canını yenile ve ismini güncelle
                         AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
@@ -176,7 +191,7 @@ public class MuhafizManager {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 10L, 10L); // Kontrol sıklığı 10 tick (~0.5 saniye) yapıldı
+        }.runTaskTimer(plugin, 5L, 5L); // Kontrol süresi 5 tick'e (0.25 saniyeye) düşürüldü
     }
 
     public void updateHealthName(LivingEntity entity, String baseName, double currentHealth, double maxHealth) {
