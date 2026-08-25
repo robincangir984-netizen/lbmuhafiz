@@ -7,6 +7,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -57,7 +59,6 @@ public class MuhafizManager {
             List<String> commands = plugin.getConfig().getStringList(path + "rewards.commands");
             int exp = plugin.getConfig().getInt(path + "rewards.experience", 0);
             
-            // Config'den şans değerlerini okuma
             double echoShardChance = plugin.getConfig().getDouble(path + "rewards.echo-shard-chance", 50.0);
             double commandChance = plugin.getConfig().getDouble(path + "rewards.command-chance", 20.0);
 
@@ -72,7 +73,6 @@ public class MuhafizManager {
 
             Location loc = (world != null) ? new Location(world, x, y, z, yaw, pitch) : null;
 
-            // Güncellenmiş MuhafizModel constructor çağrısı
             MuhafizModel model = new MuhafizModel(key, displayName, type, health, delay, commands, exp, echoShardChance, commandChance, loc);
             muhafizModels.put(key, model);
 
@@ -88,12 +88,10 @@ public class MuhafizManager {
         Location spawnLoc = model.getSpawnLocation();
         World world = spawnLoc.getWorld();
 
-        // Chunk yüklü değilse yükle
         if (!spawnLoc.getChunk().isLoaded()) {
             spawnLoc.getChunk().load();
         }
 
-        // Aynı ID'ye sahip eski aktif bir mob varsa temizle (Türe meyi önler)
         activeMuhafizs.entrySet().removeIf(entry -> {
             if (entry.getValue().equals(model.getId())) {
                 Entity oldEntity = Bukkit.getEntity(entry.getKey());
@@ -107,11 +105,16 @@ public class MuhafizManager {
 
         Entity entity = world.spawnEntity(spawnLoc, model.getEntityType());
         if (entity instanceof LivingEntity living) {
-            living.setMaxHealth(model.getMaxHealth());
+            
+            // GENERIC_MAX_HEALTH attribute ile maks canı güvenli şekilde yükseltme
+            AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            if (maxHealthAttr != null) {
+                maxHealthAttr.setBaseValue(model.getMaxHealth());
+            }
+
             living.setHealth(model.getMaxHealth());
             living.setRemoveWhenFarAway(false);
 
-            // Silinmez PDC etiketi yapıştır
             living.getPersistentDataContainer().set(muhafizKey, PersistentDataType.STRING, model.getId());
 
             activeMuhafizs.put(living.getUniqueId(), model.getId());
@@ -151,7 +154,6 @@ public class MuhafizManager {
                     Location spawnLoc = model.getSpawnLocation();
                     Location currentLoc = living.getLocation();
 
-                    // Farklı dünyadalarsa veya doğma noktasından 15 blok uzaktalarsa (15^2 = 225)
                     if (!currentLoc.getWorld().equals(spawnLoc.getWorld()) || currentLoc.distanceSquared(spawnLoc) > 225) {
                         if (living instanceof Mob mob) {
                             mob.setTarget(null);
@@ -162,6 +164,13 @@ public class MuhafizManager {
                         }
 
                         living.teleport(spawnLoc);
+                        
+                        // Teleport ve can yenileme sırasında attribute kontrolü
+                        AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+                        if (maxHealthAttr != null) {
+                            maxHealthAttr.setBaseValue(model.getMaxHealth());
+                        }
+
                         living.setHealth(model.getMaxHealth());
                         updateHealthName(living, model.getDisplayName(), model.getMaxHealth(), model.getMaxHealth());
                     }
@@ -234,7 +243,6 @@ public class MuhafizManager {
             distanceCheckTask.cancel();
         }
 
-        // Haritada kalmış tüm muhafız etiketli varlıkları kaldır
         for (World world : Bukkit.getWorlds()) {
             for (Entity entity : world.getEntities()) {
                 if (entity.getPersistentDataContainer().has(muhafizKey, PersistentDataType.STRING)) {
