@@ -42,7 +42,10 @@ public class MuhafizManager {
         muhafizModels.clear();
 
         ConfigurationSection section = plugin.getConfig().getConfigurationSection("muhafizlar");
-        if (section == null) return;
+        if (section == null) {
+            startDistanceChecker();
+            return;
+        }
 
         for (String key : section.getKeys(false)) {
             String path = "muhafizlar." + key + ".";
@@ -83,6 +86,9 @@ public class MuhafizManager {
                 spawnMuhafiz(model);
             }
         }
+
+        // Mesafe kontrolü task'ini yeniden başlat (removeAllActive iptal etmişti)
+        startDistanceChecker();
     }
 
     public void spawnMuhafiz(MuhafizModel model) {
