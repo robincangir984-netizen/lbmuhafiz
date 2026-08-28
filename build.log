@@ -1,0 +1,44 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------------< com.lbdevz:lbmuhafiz >------------------------
+[INFO] Building LBMuhafiz 1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ lbmuhafiz ---
+[INFO] Deleting C:\Users\robin\Downloads\lbmuhafiz-main\target
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ lbmuhafiz ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ lbmuhafiz ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 7 source files with javac [debug target 17] to target\classes
+[WARNING] system modules path not set in conjunction with -source 17
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] /C:/Users/robin/Downloads/lbmuhafiz-main/src/main/java/com/lbdevz/lbmuhafiz/managers/MuhafizManager.java: Some input files use or override a deprecated API.
+[INFO] /C:/Users/robin/Downloads/lbmuhafiz-main/src/main/java/com/lbdevz/lbmuhafiz/managers/MuhafizManager.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ lbmuhafiz ---
+[INFO] skip non existing resourceDirectory C:\Users\robin\Downloads\lbmuhafiz-main\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ lbmuhafiz ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ lbmuhafiz ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- jar:3.5.0:jar (default-jar) @ lbmuhafiz ---
+[INFO] Building jar: C:\Users\robin\Downloads\lbmuhafiz-main\target\lbmuhafiz-1.0.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  11.560 s
+[INFO] Finished at: 2026-08-28T06:40:09+03:00
+[INFO] ------------------------------------------------------------------------

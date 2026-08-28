@@ -4,8 +4,8 @@ import com.lbdevz.lbmuhafiz.LBMuhafiz;
 import com.lbdevz.lbmuhafiz.models.MuhafizModel;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Random;
 
@@ -42,7 +43,8 @@ public class MuhafizDeathListener implements Listener {
         double currentHealth = plugin.getMuhafizManager().getVirtualHealth(living.getUniqueId());
         if (currentHealth <= 0) currentHealth = model.getMaxHealth();
 
-        double newHealth = currentHealth - event.getFinalDamage();
+        double finalDamage = event.getFinalDamage();
+        double newHealth = currentHealth - finalDamage;
 
         if (newHealth <= 0) {
             // Sanal can bitti -> gercek olum
@@ -51,14 +53,34 @@ public class MuhafizDeathListener implements Listener {
             return;
         }
 
-        // Henuz olmedi: vanilla hasari iptal et, cani sanal sistem yonetir
-        event.setCancelled(true);
         plugin.getMuhafizManager().setVirtualHealth(living.getUniqueId(), newHealth);
         plugin.getMuhafizManager().updateHealthName(living, model.getDisplayName(), newHealth, model.getMaxHealth());
 
-        // Hasar geri bildirimi (ses + partikul)
-        living.getWorld().playSound(living.getLocation(), Sound.ENTITY_GENERIC_HURT, 1.0f, 1.0f);
-        living.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, living.getLocation().add(0, living.getHeight() / 2.0, 0), 5, 0.3, 0.5, 0.3, 0.1);
+        AttributeInstance maxAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        final double vanillaMax = (maxAttr != null) ? maxAttr.getBaseValue() : 1024.0;
+
+        // Bu vurus vanilla cani bitirmesin: gerekiyorsa hasar uygulanmadan once cani yukselt
+        if (living.getHealth() <= finalDamage + 1.0) {
+            double safe = finalDamage + 2.0;
+            if (safe > vanillaMax) safe = vanillaMax;
+            living.setHealth(safe);
+        }
+
+        // Vanilla hasar UYGULANIR: ittirme, kirmizi yanip sonme, ses ve hasar sayisi dogal calisir.
+        // Olmemesi icin 1 tick sonra vanilla can, sanal can oranina geri senkronlanir.
+        final double virtualNow = newHealth;
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!living.isValid() || living.isDead()) return;
+
+                double target = vanillaMax * (virtualNow / model.getMaxHealth());
+                if (target < 1.0) target = 1.0;
+                if (target > vanillaMax) target = vanillaMax;
+
+                living.setHealth(target);
+            }
+        }.runTaskLater(plugin, 1L);
     }
 
     @EventHandler
