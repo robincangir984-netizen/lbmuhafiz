@@ -163,21 +163,20 @@ public class MuhafizManager {
                         if (entity instanceof LivingEntity living) {
                             Location mobLoc = living.getLocation();
 
-                            // 1. Mob setLoc'tan 8 blok uzaklaştı mı? (8^2 = 64)
-                            boolean mobFar = !mobLoc.getWorld().equals(setLoc.getWorld()) || mobLoc.distanceSquared(setLoc) > 64.0;
+                            // 1. Mob setLoc'tan 15 blok uzaklaştı mı? (15^2 = 225)
+                            boolean mobFar = !mobLoc.getWorld().equals(setLoc.getWorld()) || mobLoc.distanceSquared(setLoc) > 225.0;
 
-                            // 2. Mob'un saldırdığı hedef setLoc'tan 8 blok uzaklaştı mı?
-                            boolean targetFar = false;
+                            // 2. Mob'un saldırdığı hedef setLoc'tan 15 blok uzaklaştıysa sadece hedefi bırak,
+                            //    mobu SİLME; hedefi bırakınca yuvasına geri döner.
                             if (living instanceof Mob mob && mob.getTarget() != null) {
                                 Location targetLoc = mob.getTarget().getLocation();
-                                if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 64.0) {
-                                    targetFar = true;
+                                if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 225.0) {
                                     mob.setTarget(null);
                                 }
                             }
 
-                            // 8 blok sınırı ihlal edildiyse derhal imha et ve respawn sürecine al
-                            if (mobFar || targetFar) {
+                            // Mobun KENDİSİ 15 blok sınırını ihlal ettiyse derhal imha et ve respawn sürecine al
+                            if (mobFar) {
                                 resetAndRespawn(model, uuid, living);
                                 break;
                             }

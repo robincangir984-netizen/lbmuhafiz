@@ -27,8 +27,8 @@ public class MuhafizListener implements Listener {
                 Location setLoc = model.getSpawnLocation();
                 Location targetLoc = event.getTarget().getLocation();
 
-                // Hedef oyuncu setloc konumundan 8 blok uzağa çıktığı an hedef almayı iptal et
-                if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 64.0) {
+                // Hedef oyuncu setloc konumundan 15 blok uzağa çıktığı an hedef almayı iptal et
+                if (!targetLoc.getWorld().equals(setLoc.getWorld()) || targetLoc.distanceSquared(setLoc) > 225.0) {
                     event.setCancelled(true);
                     if (event.getEntity() instanceof Mob mob) {
                         mob.setTarget(null);
