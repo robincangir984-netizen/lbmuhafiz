@@ -4,6 +4,8 @@ import com.lbdevz.lbmuhafiz.LBMuhafiz;
 import com.lbdevz.lbmuhafiz.models.MuhafizModel;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,7 +14,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Random;
 
@@ -25,7 +26,7 @@ public class MuhafizDeathListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof LivingEntity living)) return;
 
@@ -36,15 +37,28 @@ public class MuhafizDeathListener implements Listener {
         MuhafizModel model = plugin.getMuhafizManager().getMuhafizByUUID(living.getUniqueId());
         if (model == null) return;
 
-        // Hasar hesaplandıktan hemen sonra can barını güncelle (1 tick sonra)
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (living.isValid() && !living.isDead()) {
-                    plugin.getMuhafizManager().updateHealthName(living, model.getDisplayName(), living.getHealth(), model.getMaxHealth());
-                }
-            }
-        }.runTaskLater(plugin, 1L);
+        // SANAL CAN SISTEMI: Config'deki can 1024'u asabilir (orn. 5500).
+        // Vanilla can en fazla 1024 oldugu icin hasari plugin takip eder.
+        double currentHealth = plugin.getMuhafizManager().getVirtualHealth(living.getUniqueId());
+        if (currentHealth <= 0) currentHealth = model.getMaxHealth();
+
+        double newHealth = currentHealth - event.getFinalDamage();
+
+        if (newHealth <= 0) {
+            // Sanal can bitti -> gercek olum
+            plugin.getMuhafizManager().removeVirtualHealth(living.getUniqueId());
+            event.setDamage(1000000.0);
+            return;
+        }
+
+        // Henuz olmedi: vanilla hasari iptal et, cani sanal sistem yonetir
+        event.setCancelled(true);
+        plugin.getMuhafizManager().setVirtualHealth(living.getUniqueId(), newHealth);
+        plugin.getMuhafizManager().updateHealthName(living, model.getDisplayName(), newHealth, model.getMaxHealth());
+
+        // Hasar geri bildirimi (ses + partikul)
+        living.getWorld().playSound(living.getLocation(), Sound.ENTITY_GENERIC_HURT, 1.0f, 1.0f);
+        living.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, living.getLocation().add(0, living.getHeight() / 2.0, 0), 5, 0.3, 0.5, 0.3, 0.1);
     }
 
     @EventHandler

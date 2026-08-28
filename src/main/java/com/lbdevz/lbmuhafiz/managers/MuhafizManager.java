@@ -27,6 +27,7 @@ public class MuhafizManager {
     private final LBMuhafiz plugin;
     private final Map<String, MuhafizModel> muhafizModels = new HashMap<>();
     private final Map<UUID, String> activeMuhafizs = new HashMap<>();
+    private final Map<UUID, Double> virtualHealth = new HashMap<>();
     private final Set<String> respawningModels = new HashSet<>();
     private final NamespacedKey muhafizKey;
     private BukkitTask distanceCheckTask;
@@ -60,6 +61,7 @@ public class MuhafizManager {
             }
 
             double health = plugin.getConfig().getDouble(path + "health", 100.0);
+            double damage = plugin.getConfig().getDouble(path + "damage", 10.0);
             int delay = plugin.getConfig().getInt(path + "respawn-delay-seconds", 300);
 
             List<String> commands = plugin.getConfig().getStringList(path + "rewards.commands");
@@ -79,7 +81,7 @@ public class MuhafizManager {
 
             Location loc = (world != null) ? new Location(world, x, y, z, yaw, pitch) : null;
 
-            MuhafizModel model = new MuhafizModel(key, displayName, type, health, delay, commands, exp, echoShardChance, commandChance, loc);
+            MuhafizModel model = new MuhafizModel(key, displayName, type, health, damage, delay, commands, exp, echoShardChance, commandChance, loc);
             muhafizModels.put(key, model);
 
             if (loc != null) {
@@ -108,19 +110,23 @@ public class MuhafizManager {
 
         Entity entity = world.spawnEntity(spawnLoc, model.getEntityType());
         if (entity instanceof LivingEntity living) {
+            // Vanilla can limiti 1024'tur; uzerindeki degerler sanal can sistemiyle yonetilir
+            double vanillaMax = Math.min(model.getMaxHealth(), 1024.0);
+
             AttributeInstance maxHealthAttr = living.getAttribute(Attribute.GENERIC_MAX_HEALTH);
             if (maxHealthAttr != null) {
-                maxHealthAttr.setBaseValue(model.getMaxHealth());
+                maxHealthAttr.setBaseValue(vanillaMax);
             }
 
-            living.setHealth(model.getMaxHealth());
+            living.setHealth(vanillaMax);
             living.setRemoveWhenFarAway(false);
 
             living.getPersistentDataContainer().set(muhafizKey, PersistentDataType.STRING, model.getId());
 
             activeMuhafizs.put(living.getUniqueId(), model.getId());
+            virtualHealth.put(living.getUniqueId(), model.getMaxHealth());
             respawningModels.remove(model.getId());
-            updateHealthName(living, model.getDisplayName(), living.getHealth(), model.getMaxHealth());
+            updateHealthName(living, model.getDisplayName(), model.getMaxHealth(), model.getMaxHealth());
         }
     }
 
@@ -196,6 +202,7 @@ public class MuhafizManager {
     private void resetAndRespawn(MuhafizModel model, UUID uuid, Entity entity) {
         respawningModels.add(model.getId());
         activeMuhafizs.remove(uuid);
+        virtualHealth.remove(uuid);
 
         if (entity != null && entity.isValid()) {
             entity.remove();
@@ -218,7 +225,13 @@ public class MuhafizManager {
                 }
             }
         }
-        activeMuhafizs.values().removeIf(id -> id.equals(modelId));
+        activeMuhafizs.entrySet().removeIf(entry -> {
+            if (entry.getValue().equals(modelId)) {
+                virtualHealth.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
     }
 
     public void updateHealthName(LivingEntity entity, String baseName, double currentHealth, double maxHealth) {
@@ -249,6 +262,7 @@ public class MuhafizManager {
     }
 
     public void handleDeath(UUID entityUUID) {
+        virtualHealth.remove(entityUUID);
         String muhafizId = activeMuhafizs.remove(entityUUID);
         if (muhafizId == null || respawningModels.contains(muhafizId)) return;
 
@@ -266,6 +280,18 @@ public class MuhafizManager {
 
     public boolean isMuhafiz(UUID entityUUID) {
         return activeMuhafizs.containsKey(entityUUID);
+    }
+
+    public double getVirtualHealth(UUID entityUUID) {
+        return virtualHealth.getOrDefault(entityUUID, 0.0);
+    }
+
+    public void setVirtualHealth(UUID entityUUID, double health) {
+        virtualHealth.put(entityUUID, health);
+    }
+
+    public void removeVirtualHealth(UUID entityUUID) {
+        virtualHealth.remove(entityUUID);
     }
 
     public MuhafizModel getMuhafizByUUID(UUID entityUUID) {
@@ -302,6 +328,7 @@ public class MuhafizManager {
         }
 
         activeMuhafizs.clear();
+        virtualHealth.clear();
         respawningModels.clear();
     }
 }

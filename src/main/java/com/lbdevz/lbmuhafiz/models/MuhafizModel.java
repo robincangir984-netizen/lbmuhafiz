@@ -11,6 +11,7 @@ public class MuhafizModel {
     private final String displayName;
     private final EntityType entityType;
     private final double maxHealth;
+    private final double damage;
     private final int respawnDelaySeconds;
     private final List<String> rewardCommands;
     private final int rewardExp;
@@ -18,13 +19,14 @@ public class MuhafizModel {
     private final double commandChance;
     private Location spawnLocation;
 
-    public MuhafizModel(String id, String displayName, EntityType entityType, double maxHealth, 
+    public MuhafizModel(String id, String displayName, EntityType entityType, double maxHealth, double damage,
                         int respawnDelaySeconds, List<String> rewardCommands, int rewardExp, 
                         double echoShardChance, double commandChance, Location spawnLocation) {
         this.id = id;
         this.displayName = displayName;
         this.entityType = entityType;
         this.maxHealth = maxHealth;
+        this.damage = damage;
         this.respawnDelaySeconds = respawnDelaySeconds;
         this.rewardCommands = rewardCommands;
         this.rewardExp = rewardExp;
@@ -37,6 +39,7 @@ public class MuhafizModel {
     public String getDisplayName() { return displayName; }
     public EntityType getEntityType() { return entityType; }
     public double getMaxHealth() { return maxHealth; }
+    public double getDamage() { return damage; }
     public int getRespawnDelaySeconds() { return respawnDelaySeconds; }
     public List<String> getRewardCommands() { return rewardCommands; }
     public int getRewardExp() { return rewardExp; }

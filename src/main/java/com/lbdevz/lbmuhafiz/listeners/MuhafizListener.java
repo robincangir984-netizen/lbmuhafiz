@@ -3,10 +3,13 @@ package com.lbdevz.lbmuhafiz.listeners;
 import com.lbdevz.lbmuhafiz.LBMuhafiz;
 import com.lbdevz.lbmuhafiz.models.MuhafizModel;
 import org.bukkit.Location;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
 public class MuhafizListener implements Listener {
@@ -35,6 +38,28 @@ public class MuhafizListener implements Listener {
                     }
                 }
             }
+        }
+    }
+
+    // Muhafizin verdigi hasar: config'deki "damage" degeri uygulanir
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onMuhafizAttack(EntityDamageByEntityEvent event) {
+        LivingEntity attacker = null;
+
+        if (event.getDamager() instanceof LivingEntity le) {
+            attacker = le;
+        } else if (event.getDamager() instanceof Projectile projectile && projectile.getShooter() instanceof LivingEntity le) {
+            attacker = le;
+        }
+
+        if (attacker == null) return;
+
+        MuhafizModel model = plugin.getMuhafizManager().getMuhafizByUUID(attacker.getUniqueId());
+        if (model == null) return;
+
+        // 0 veya negatifse vanilla hasar korunur
+        if (model.getDamage() > 0) {
+            event.setDamage(model.getDamage());
         }
     }
 }

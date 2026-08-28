@@ -12,12 +12,13 @@ muhafizlar:
   muhafiz_1:
     display-name: "&c&lYağmacı Muhafızı &8[ Boss 1 ]"
     entity-type: "PILLAGER"
-    health: 1250.0
+    health: 4750.0
+    damage: 35.0
     respawn-delay-seconds: 600
     rewards:
       experience: 600
-      echo-shard-chance: 90.0
-      command-chance: 80.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% yagmaci 1"
     location:
@@ -31,12 +32,13 @@ muhafizlar:
   muhafiz_2:
     display-name: "&6&lYağmacı Dükü &8[ Boss 2 ]"
     entity-type: "VINDICATOR"
-    health: 1500.0
+    health: 5000.0
+    damage: 40.0
     respawn-delay-seconds: 720
     rewards:
       experience: 750
-      echo-shard-chance: 95.0
-      command-chance: 85.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% yagmaci 2"
     location:
@@ -50,12 +52,13 @@ muhafizlar:
   muhafiz_3:
     display-name: "&4&lBaş Yağmacı &8[ Boss 3 ]"
     entity-type: "EVOKER"
-    health: 2000.0
+    health: 5250.0
+    damage: 45.0
     respawn-delay-seconds: 900
     rewards:
       experience: 1000
-      echo-shard-chance: 100.0
-      command-chance: 90.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% yagmaci 3"
         - "crates key give %player% vip 1"
@@ -70,12 +73,13 @@ muhafizlar:
   muhafiz_4:
     display-name: "&d&l&m---&5&l YAĞMACI EFSANESİ &d&l&m--- &8[ Boss 4 ]"
     entity-type: "RAVAGER"
-    health: 3000.0
+    health: 5500.0
+    damage: 55.0
     respawn-delay-seconds: 1200
     rewards:
       experience: 1500
-      echo-shard-chance: 100.0
-      command-chance: 100.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% efsanevi 1"
         - "crates key give %player% vip 2"
@@ -91,12 +95,13 @@ muhafizlar:
   muhafiz_5:
     display-name: "&c&lPiglin Muhafız &8[ Boss 5 ]"
     entity-type: "PIGLIN"
-    health: 150.0
+    health: 2000.0
+    damage: 8.0
     respawn-delay-seconds: 300
     rewards:
       experience: 50
-      echo-shard-chance: 40.0
-      command-chance: 30.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 1"
     location:
@@ -110,12 +115,13 @@ muhafizlar:
   muhafiz_6:
     display-name: "&e&lZombi Piglin Muhafız &8[ Boss 6 ]"
     entity-type: "ZOMBIFIED_PIGLIN"
-    health: 200.0
+    health: 2250.0
+    damage: 10.0
     respawn-delay-seconds: 300
     rewards:
       experience: 75
-      echo-shard-chance: 45.0
-      command-chance: 35.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 1"
     location:
@@ -129,12 +135,13 @@ muhafizlar:
   muhafiz_7:
     display-name: "&b&lNether Iskeleti Muhafız &8[ Boss 7 ]"
     entity-type: "WITHER_SKELETON"
-    health: 250.0
+    health: 2500.0
+    damage: 12.0
     respawn-delay-seconds: 300
     rewards:
       experience: 100
-      echo-shard-chance: 50.0
-      command-chance: 40.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 1"
     location:
@@ -148,12 +155,13 @@ muhafizlar:
   muhafiz_8:
     display-name: "&2&lZoglin Muhafız &8[ Boss 8 ]"
     entity-type: "ZOGLIN"
-    health: 300.0
+    health: 2750.0
+    damage: 14.0
     respawn-delay-seconds: 300
     rewards:
       experience: 125
-      echo-shard-chance: 55.0
-      command-chance: 45.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 1"
     location:
@@ -167,12 +175,13 @@ muhafizlar:
   muhafiz_9:
     display-name: "&5&lGölge Muhafızı &8[ Boss 9 ]"
     entity-type: "ENDERMAN"
-    health: 350.0
+    health: 3000.0
+    damage: 16.0
     respawn-delay-seconds: 300
     rewards:
       experience: 150
-      echo-shard-chance: 60.0
-      command-chance: 50.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 2"
     location:
@@ -186,12 +195,13 @@ muhafizlar:
   muhafiz_10:
     display-name: "&6&lKızıl Muhafız &8[ Boss 10 ]"
     entity-type: "PIGLIN_BRUTE"
-    health: 400.0
+    health: 3250.0
+    damage: 18.0
     respawn-delay-seconds: 300
     rewards:
       experience: 175
-      echo-shard-chance: 65.0
-      command-chance: 55.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 2"
     location:
@@ -205,12 +215,13 @@ muhafizlar:
   muhafiz_11:
     display-name: "&d&lMistik Muhafız &8[ Boss 11 ]"
     entity-type: "EVOKER"
-    health: 450.0
+    health: 3500.0
+    damage: 20.0
     respawn-delay-seconds: 300
     rewards:
       experience: 200
-      echo-shard-chance: 70.0
-      command-chance: 60.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 2"
     location:
@@ -224,12 +235,13 @@ muhafizlar:
   muhafiz_12:
     display-name: "&8&lKaya Muhafızı &8[ Boss 12 ]"
     entity-type: "IRON_GOLEM"
-    health: 500.0
+    health: 3750.0
+    damage: 22.0
     respawn-delay-seconds: 300
     rewards:
       experience: 250
-      echo-shard-chance: 75.0
-      command-chance: 65.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 3"
     location:
@@ -243,12 +255,13 @@ muhafizlar:
   muhafiz_13:
     display-name: "&1&lOkyanus Muhafızı &8[ Boss 13 ]"
     entity-type: "ELDER_GUARDIAN"
-    health: 600.0
+    health: 4000.0
+    damage: 25.0
     respawn-delay-seconds: 300
     rewards:
       experience: 300
-      echo-shard-chance: 80.0
-      command-chance: 70.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 3"
     location:
@@ -262,12 +275,13 @@ muhafizlar:
   muhafiz_14:
     display-name: "&4&l&m---&c&l ŞAHRAN KRALI &4&l&m--- &8[ Boss 14 ]"
     entity-type: "WITHER_SKELETON"
-    health: 1000.0
+    health: 4500.0
+    damage: 30.0
     respawn-delay-seconds: 600
     rewards:
       experience: 500
-      echo-shard-chance: 85.0
-      command-chance: 75.0
+      echo-shard-chance: 25.0
+      command-chance: 5.0
       commands:
         - "crates key give %player% kit 3"
         - "crates key give %player% vip 1"
